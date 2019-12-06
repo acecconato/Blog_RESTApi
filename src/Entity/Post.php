@@ -5,6 +5,8 @@ namespace App\Entity;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
+use Symfony\Component\Serializer\Annotation\Groups;
+use Symfony\Component\Validator\Constraints as Assert;
 
 /**
  * @ORM\Entity(repositoryClass="App\Repository\PostRepository")
@@ -16,31 +18,40 @@ class Post
      * @ORM\Id()
      * @ORM\GeneratedValue()
      * @ORM\Column(type="integer")
+     * @Groups({"User"})
      */
     private $id;
 
     /**
      * @ORM\Column(type="string", length=90)
+     * @Groups({"User"})
+     * @Assert\Length(min="5", max="90", groups={"Create", "Update"})
      */
     private $title;
 
     /**
      * @ORM\Column(type="string", length=100)
+     * @Groups({"User"})
+     * @Assert\Length(min="5", max="100", groups={"Create", "Update"})
      */
     private $slug;
 
     /**
      * @ORM\Column(type="text")
+     * @Groups({"Post"})
+     * @Assert\NotBlank(groups={"Create", "Update"})
      */
     private $content;
 
     /**
      * @ORM\Column(type="datetime")
+     * @Groups({"Post"})
      */
     private $created_at;
 
     /**
      * @ORM\Column(type="datetime", nullable=true)
+     * @Groups({"Post"})
      */
     private $updated_at;
 
@@ -52,23 +63,30 @@ class Post
      *     fetch="EAGER"
      * )
      * @ORM\JoinColumn(onDelete="CASCADE", nullable=true)
+     * @Groups("Post")
+     * @Assert\Valid(groups={"Create", "Update"})
      */
     private $attachments;
 
     /**
      * @ORM\ManyToMany(targetEntity="App\Entity\Category", mappedBy="posts", cascade={"persist"}, fetch="EAGER")
      * @ORM\JoinColumn(nullable=true)
+     * @Groups("Post")
+     * @Assert\Valid(groups={"Create", "Update"})
      */
     private $categories;
 
     /**
      * @ORM\ManyToMany(targetEntity="App\Entity\Tag", mappedBy="posts", cascade={"persist"}, fetch="EAGER")
      * @ORM\JoinColumn(nullable=true)
+     * @Groups("Post")
+     * @Assert\Valid(groups={"Create", "Update"})
      */
     private $tags;
 
     /**
      * @ORM\ManyToOne(targetEntity="App\Entity\User", inversedBy="posts", cascade={"persist"}, fetch="EAGER")
+     * @Groups("Post")
      */
     private $user;
 

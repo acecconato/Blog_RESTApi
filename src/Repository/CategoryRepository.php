@@ -5,6 +5,7 @@ namespace App\Repository;
 use App\Entity\Category;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 use Doctrine\Common\Persistence\ManagerRegistry;
+use Doctrine\ORM\Tools\Pagination\Paginator;
 
 /**
  * @method Category|null find($id, $lockMode = null, $lockVersion = null)
@@ -19,32 +20,12 @@ class CategoryRepository extends ServiceEntityRepository
         parent::__construct($registry, Category::class);
     }
 
-    // /**
-    //  * @return Category[] Returns an array of Category objects
-    //  */
-    /*
-    public function findByExampleField($value)
+    public function findAllPaginated($page, $resourcesPerPage)
     {
-        return $this->createQueryBuilder('c')
-            ->andWhere('c.exampleField = :val')
-            ->setParameter('val', $value)
-            ->orderBy('c.id', 'ASC')
-            ->setMaxResults(10)
-            ->getQuery()
-            ->getResult()
-        ;
-    }
-    */
+        $qb = $this->createQueryBuilder('c')
+            ->setFirstResult($page)
+            ->setMaxResults($resourcesPerPage);
 
-    /*
-    public function findOneBySomeField($value): ?Category
-    {
-        return $this->createQueryBuilder('c')
-            ->andWhere('c.exampleField = :val')
-            ->setParameter('val', $value)
-            ->getQuery()
-            ->getOneOrNullResult()
-        ;
+        return new Paginator($qb);
     }
-    */
 }

@@ -5,6 +5,7 @@ namespace App\Repository;
 use App\Entity\User;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 use Doctrine\Common\Persistence\ManagerRegistry;
+use Doctrine\ORM\Tools\Pagination\Paginator;
 use Symfony\Component\Security\Core\Exception\UnsupportedUserException;
 use Symfony\Component\Security\Core\User\PasswordUpgraderInterface;
 use Symfony\Component\Security\Core\User\UserInterface;
@@ -27,7 +28,7 @@ class UserRepository extends ServiceEntityRepository implements PasswordUpgrader
      */
     public function upgradePassword(UserInterface $user, string $newEncodedPassword): void
     {
-        if (!$user instanceof User) {
+        if ( ! $user instanceof User) {
             throw new UnsupportedUserException(sprintf('Instances of "%s" are not supported.', \get_class($user)));
         }
 
@@ -36,32 +37,33 @@ class UserRepository extends ServiceEntityRepository implements PasswordUpgrader
         $this->_em->flush();
     }
 
-    // /**
-    //  * @return User[] Returns an array of User objects
-    //  */
-    /*
-    public function findByExampleField($value)
+    /**
+     * @param $identifier
+     *
+     * @return mixed
+     * @throws \Doctrine\ORM\NoResultException
+     * @throws \Doctrine\ORM\NonUniqueResultException
+     */
+    public function findUserByIdentifier($identifier)
     {
-        return $this->createQueryBuilder('u')
-            ->andWhere('u.exampleField = :val')
-            ->setParameter('val', $value)
-            ->orderBy('u.id', 'ASC')
-            ->setMaxResults(10)
-            ->getQuery()
-            ->getResult()
-        ;
-    }
-    */
+        $qb = $this
+            ->createQueryBuilder('u')
+            ->where('u.id = :identifier')
+            ->orWhere('u.username = :identifier')
+            ->setParameter('identifier', $identifier);
 
-    /*
-    public function findOneBySomeField($value): ?User
-    {
-        return $this->createQueryBuilder('u')
-            ->andWhere('u.exampleField = :val')
-            ->setParameter('val', $value)
-            ->getQuery()
-            ->getOneOrNullResult()
-        ;
+        return $qb->getQuery()->getSingleResult();
     }
-    */
+
+    public function findAllPaginated($page, $resourcesPerPage)
+    {
+        $qb = $this
+            ->createQueryBuilder('u')
+            ->orderBy('u.id', 'ASC')
+            ->getQuery()
+            ->setFirstResult(($page - 1) * $resourcesPerPage)
+            ->setMaxResults($resourcesPerPage);
+
+        return new Paginator($qb);
+    }
 }
