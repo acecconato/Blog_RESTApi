@@ -6,12 +6,12 @@ use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
 use Symfony\Component\Security\Core\User\UserInterface;
-use Symfony\Component\Security\Core\Validator\Constraints\UserPassword;
 use Symfony\Component\Serializer\Annotation\Groups;
 use Symfony\Component\Validator\Constraints as Assert;
 
 /**
  * @ORM\Entity(repositoryClass="App\Repository\UserRepository")
+ * @ORM\HasLifecycleCallbacks()
  */
 class User implements UserInterface
 {
@@ -19,13 +19,13 @@ class User implements UserInterface
      * @ORM\Id()
      * @ORM\GeneratedValue()
      * @ORM\Column(type="integer")
-     * @Groups({"List", "User"})
+     * @Groups({"List", "User", "Post"})
      */
     private $id;
 
     /**
      * @ORM\Column(type="string", length=40, unique=true)
-     * @Groups({"List", "User"})
+     * @Groups({"List", "User", "Post"})
      * @Assert\NotBlank(groups={"Create"})
      * @Assert\Length(min="4", max="40", groups={"Create", "Update"})
      */
@@ -55,14 +55,22 @@ class User implements UserInterface
     private $posts;
 
     /**
-     * @var array
-     * @Groups({"List"})
+     * @var integer
+     * @Groups({"List", "Post"})
      */
-    private $meta = [];
+    private $postsCount;
 
     public function __construct()
     {
         $this->posts = new ArrayCollection();
+    }
+
+    /**
+     * @ORM\PostLoad()
+     */
+    public function onPostLoad()
+    {
+        $this->postsCount = (int)count($this->getPosts());
     }
 
     public function getId(): ?int
@@ -77,7 +85,7 @@ class User implements UserInterface
      */
     public function getUsername(): string
     {
-        return (string) $this->username;
+        return (string)$this->username;
     }
 
     public function setUsername(string $username): self
@@ -111,7 +119,7 @@ class User implements UserInterface
      */
     public function getPassword(): string
     {
-        return (string) $this->password;
+        return (string)$this->password;
     }
 
     public function setPassword(string $password): self
@@ -148,7 +156,7 @@ class User implements UserInterface
 
     public function addPost(Post $post): self
     {
-        if (!$this->posts->contains($post)) {
+        if ( ! $this->posts->contains($post)) {
             $this->posts[] = $post;
             $post->setUser($this);
         }
@@ -170,23 +178,22 @@ class User implements UserInterface
     }
 
     /**
-     * @return array
+     * @return int
      */
-    public function getMeta()
+    public function getPostsCount(): int
     {
-        return $this->meta;
+        return $this->postsCount;
     }
 
     /**
-     * @param string $meta
+     * @param int $postsCount
+     *
+     * @return User
      */
-    public function setMeta(string $meta): void
+    public function setPostsCount(int $postsCount): User
     {
-        $this->meta = $meta;
-    }
+        $this->postsCount = $postsCount;
 
-    public function addMeta($name, $value)
-    {
-        $this->meta[$name] = $value;
+        return $this;
     }
 }

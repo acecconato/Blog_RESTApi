@@ -30,3 +30,7 @@ services:
     app.entity_merger:
         class: 'App\Entity\EntityMerger'
     App\Entity\EntityMerger: '@app.entity_merger'
+
+    app.entity_duplication_sorter:
+        class: 'App\Entity\EntityDuplicationSorter'
+    App\Entity\EntityDuplicationSorter: '@app.entity_duplication_sorter'

@@ -2,6 +2,7 @@
 
 namespace App\Entity;
 
+use Cocur\Slugify\Slugify;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
@@ -14,24 +15,25 @@ use Symfony\Component\Validator\Constraints as Assert;
  */
 class Post
 {
+    const EXCERPT_LENGTH = 150;
     /**
      * @ORM\Id()
      * @ORM\GeneratedValue()
      * @ORM\Column(type="integer")
-     * @Groups({"User"})
+     * @Groups({"User", "Post", "Posts"})
      */
     private $id;
 
     /**
      * @ORM\Column(type="string", length=90)
-     * @Groups({"User"})
+     * @Groups({"User", "Posts", "Post"})
      * @Assert\Length(min="5", max="90", groups={"Create", "Update"})
      */
     private $title;
 
     /**
      * @ORM\Column(type="string", length=100)
-     * @Groups({"User"})
+     * @Groups({"User", "Posts", "Post"})
      * @Assert\Length(min="5", max="100", groups={"Create", "Update"})
      */
     private $slug;
@@ -42,6 +44,18 @@ class Post
      * @Assert\NotBlank(groups={"Create", "Update"})
      */
     private $content;
+
+    /**
+     * @var string
+     * @Groups({"Posts"})
+     */
+    private $excerpt = '';
+
+    /**
+     * @var array
+     * @Groups({"Posts"})
+     */
+    private $count = [];
 
     /**
      * @ORM\Column(type="datetime")
@@ -64,14 +78,13 @@ class Post
      * )
      * @ORM\JoinColumn(onDelete="CASCADE", nullable=true)
      * @Groups("Post")
-     * @Assert\Valid(groups={"Create", "Update"})
      */
     private $attachments;
 
     /**
      * @ORM\ManyToMany(targetEntity="App\Entity\Category", mappedBy="posts", cascade={"persist"}, fetch="EAGER")
      * @ORM\JoinColumn(nullable=true)
-     * @Groups("Post")
+     * @Groups({"Post"})
      * @Assert\Valid(groups={"Create", "Update"})
      */
     private $categories;
@@ -80,7 +93,6 @@ class Post
      * @ORM\ManyToMany(targetEntity="App\Entity\Tag", mappedBy="posts", cascade={"persist"}, fetch="EAGER")
      * @ORM\JoinColumn(nullable=true)
      * @Groups("Post")
-     * @Assert\Valid(groups={"Create", "Update"})
      */
     private $tags;
 
@@ -98,11 +110,32 @@ class Post
     }
 
     /**
+     * @ORM\PostLoad()
+     */
+    public function onPostLoad()
+    {
+        $excerpt = $this->getContent();
+        if (strlen($this->getContent()) > Post::EXCERPT_LENGTH) {
+            $excerpt = substr($this->getContent(), 0, Post::EXCERPT_LENGTH);
+            $excerpt .= ' [...]';
+        }
+
+        $this->setExcerpt($excerpt);
+        $this->addCount('categories', count($this->getCategories()));
+        $this->addCount('tags', count($this->getTags()));
+        $this->addCount('attachments', count($this->getAttachments()));
+    }
+
+    /**
      * @ORM\PrePersist()
      */
     public function onPrePersist()
     {
-        $this->created_at = new \DateTime();
+        $this->setCreatedAt(new \DateTime());
+        if ( ! strlen($this->slug)) {
+            $slugify = new Slugify();
+            $this->setSlug($slugify->slugify($this->getTitle()));
+        }
     }
 
     /**
@@ -275,5 +308,50 @@ class Post
         $this->user = $user;
 
         return $this;
+    }
+
+    /**
+     * @return string
+     */
+    public function getExcerpt(): string
+    {
+        return $this->excerpt;
+    }
+
+    /**
+     * @param string $excerpt
+     *
+     * @return Post
+     */
+    public function setExcerpt(string $excerpt): Post
+    {
+        $this->excerpt = $excerpt;
+
+        return $this;
+    }
+
+    /**
+     * @return array
+     */
+    public function getCount(): array
+    {
+        return $this->count;
+    }
+
+    /**
+     * @param array $count
+     *
+     * @return Post
+     */
+    public function setCount(array $count): Post
+    {
+        $this->count = $count;
+
+        return $this;
+    }
+
+    public function addCount($key, $value)
+    {
+        $this->count[$key] = $value;
     }
 }

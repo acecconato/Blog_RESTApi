@@ -48,11 +48,6 @@ class UsersController extends AbstractFOSRestController
             return $this->redirectToRoute('api_get_users');
         }
 
-        /** @var User $user */
-        foreach ($users as $user) {
-            $user->addMeta('posts_count', count($user->getPosts()));
-        }
-
         return $users;
     }
 
@@ -139,6 +134,7 @@ class UsersController extends AbstractFOSRestController
 
     /**
      * @Rest\Delete("/users/{identifier<^[\d|\w]+$>}", name="api_delete_user")
+     * @Entity("user", expr="repository.findUserByIdentifier(identifier)")
      * @Rest\View(204)
      *
      * @param User $user

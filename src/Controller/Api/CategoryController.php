@@ -6,7 +6,6 @@ use App\Repository\CategoryRepository;
 use FOS\RestBundle\Controller\Annotations as Rest;
 use FOS\RestBundle\Request\ParamFetcher;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
-use Symfony\Component\Translation\Exception\NotFoundResourceException;
 
 class CategoryController extends AbstractController
 {
