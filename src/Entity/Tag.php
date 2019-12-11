@@ -2,12 +2,15 @@
 
 namespace App\Entity;
 
+use Cocur\Slugify\Slugify;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
+use Symfony\Component\Serializer\Annotation\Groups;
 
 /**
  * @ORM\Entity(repositoryClass="App\Repository\TagRepository")
+ * @ORM\HasLifecycleCallbacks()
  */
 class Tag
 {
@@ -15,33 +18,63 @@ class Tag
      * @ORM\Id()
      * @ORM\GeneratedValue()
      * @ORM\Column(type="integer")
+     * @Groups({"Post", "Tags", "Tag"})
      */
     private $id;
 
     /**
      * @ORM\Column(type="string", length=20)
+     * @Groups({"Post", "Tags", "Tag"})
      */
     private $label;
 
     /**
      * @ORM\Column(type="string", length=20)
+     * @Groups({"Tags", "Tag"})
      */
     private $slug;
 
     /**
-     * @ORM\Column(type="text")
+     * @ORM\Column(type="text", nullable=true)
+     * @Groups({"Tag"})
      */
     private $description;
 
     /**
      * @ORM\ManyToMany(targetEntity="App\Entity\Post", inversedBy="tags")
      * @ORM\JoinColumn(nullable=true)
+     * @Groups({"Tag"})
      */
     private $posts;
+
+    /**
+     * @var int
+     * @Groups({"Tags"})
+     */
+    private $countPosts = 0;
 
     public function __construct()
     {
         $this->posts = new ArrayCollection();
+    }
+
+    /**
+     * @ORM\PostLoad()
+     */
+    public function onPostLoad()
+    {
+        $this->setCountPosts($this->getPosts()->count());
+    }
+
+    /**
+     * @ORM\PrePersist()
+     */
+    public function onPrePersist()
+    {
+        if ( ! $this->getSlug()) {
+            $slugify = new Slugify();
+            $this->setSlug($slugify->slugify($this->getLabel()));
+        }
     }
 
     public function getId(): ?int
@@ -95,7 +128,7 @@ class Tag
 
     public function addPost(Post $post): self
     {
-        if (!$this->posts->contains($post)) {
+        if ( ! $this->posts->contains($post)) {
             $this->posts[] = $post;
         }
 
@@ -109,5 +142,25 @@ class Tag
         }
 
         return $this;
+    }
+
+    /**
+     * @param int $countPosts
+     *
+     * @return Tag
+     */
+    public function setCountPosts(int $countPosts): Tag
+    {
+        $this->countPosts = $countPosts;
+
+        return $this;
+    }
+
+    /**
+     * @return int
+     */
+    public function getCountPosts(): int
+    {
+        return $this->countPosts;
     }
 }

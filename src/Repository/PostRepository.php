@@ -24,6 +24,7 @@ class PostRepository extends ServiceEntityRepository
     {
         $qb = $this
             ->createQueryBuilder('p')
+            ->leftJoin('p.user', 'u', 'p.id = u.id')
             ->orderBy('p.id', 'DESC')
             ->getQuery()
             ->setFirstResult(($page - 1) * $resourcesPerPage)

@@ -2,34 +2,36 @@
 
 namespace App\Controller\Api;
 
+use App\Entity\Category;
 use App\Repository\CategoryRepository;
 use FOS\RestBundle\Controller\Annotations as Rest;
-use FOS\RestBundle\Request\ParamFetcher;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 
 class CategoryController extends AbstractController
 {
     /**
      * @Rest\Get("/categories", name="api_get_categories")
-     * @Rest\QueryParam(
-     *     name="page",
-     *     requirements="\d+",
-     *     default=1,
-     *     description="Page of pagination"
-     * )
+     * @Rest\View(serializerGroups={"Categories"})
      * @param CategoryRepository $repository
-     * @param ParamFetcher $fetcher
-     * @param $resourcesPerPage
+     *
+     * @return Category[]
      */
-    public function apiGetCategories(CategoryRepository $repository, ParamFetcher $fetcher, $resourcesPerPage)
+    public function apiGetCategories(CategoryRepository $repository)
     {
-        $page = $fetcher->get('page');
-        $categories = $repository->findAllPaginated($page, $resourcesPerPage);
+        return $repository->findAll();
     }
 
-    public function apiGetCategory()
+    /**
+     * @Rest\Get("/categories/{id}", name="api_get_category", requirements={"\d+"})
+     * @Rest\View(serializerGroups={"Category"})
+     *
+     * @param Category $category
+     *
+     * @return Category
+     */
+    public function apiGetCategory(Category $category)
     {
-
+        return $category;
     }
 
     public function apiCreateCategory()

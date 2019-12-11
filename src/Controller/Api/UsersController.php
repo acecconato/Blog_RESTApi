@@ -15,9 +15,11 @@ use FOS\RestBundle\View\View;
 use Sensio\Bundle\FrameworkExtraBundle\Configuration\Entity;
 use Sensio\Bundle\FrameworkExtraBundle\Configuration\ParamConverter;
 use Symfony\Component\HttpFoundation\RedirectResponse;
+use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Security\Core\Encoder\UserPasswordEncoderInterface;
 use Symfony\Component\Validator\ConstraintViolationList;
+use Symfony\Component\Validator\Validator\ValidatorInterface;
 
 class UsersController extends AbstractFOSRestController
 {
@@ -93,43 +95,57 @@ class UsersController extends AbstractFOSRestController
     }
 
     /**
-     * @Rest\Put("/users/{identifier<^[\d|\w]+$>}", name="api_update_user")
+     * TODO:: Remove identifier for simple id
+     * @Rest\Put("/users/{identifier<^[\d|\w]+$>}", name="api_update_put_user")
+     * @Rest\Patch("/users/{identifier<^[\d|\w]+$>}", name="api_update_patch_user")
      * @Entity("user", expr="repository.findUserByIdentifier(identifier)")
      * @ParamConverter(
      *     "newUser",
      *     class="App\Entity\User",
-     *     converter="fos_rest.request_body",
-     *     options={ "validator"={ "groups"={"Update"} } }
+     *     converter="fos_rest.request_body"
      * )
      * @Rest\View(statusCode=202)
      *
      * @param User $user
      * @param $newUser User
-     * @param ConstraintViolationList $violations
+     * @param ValidatorInterface $validator
      * @param UserPasswordEncoderInterface $encoder
      * @param EntityManagerInterface $em
      * @param EntityMerger $merger
+     * @param Request $request
      *
-     * @return User|View
+     * @return View|void
      */
     public function apiUpdateUser(
         User $user,
         $newUser,
-        ConstraintViolationList $violations,
+        ValidatorInterface $validator,
         UserPasswordEncoderInterface $encoder,
         EntityManagerInterface $em,
-        EntityMerger $merger
+        EntityMerger $merger,
+        Request $request
     ) {
-        if (count($violations)) {
-            return $this->view($violations, Response::HTTP_BAD_REQUEST);
+        if ($request->isMethod('PATCH')) {
+            $errors = $validator->validate($newUser, null, ['Update']);
+            if (count($errors)) {
+                return $this->view($errors);
+            }
+
+            if ($merger->hasChanged($user, $newUser)) {
+                $merger->merge($user, $newUser);
+            }
         }
 
-        if ($merger->hasChanged($user, $newUser)) {
+        if ($request->isMethod('PUT')) {
+            $errors = $validator->validate($newUser, null, ['Create']);
+            if (count($errors)) {
+                return $this->view($errors);
+            }
+
             $merger->merge($user, $newUser);
-            $em->flush();
         }
 
-        return $user;
+        $em->flush();
     }
 
     /**

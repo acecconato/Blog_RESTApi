@@ -31,6 +31,14 @@ class EntityDuplicationSorter
                 }
                 break;
             case ('tags'):
+                $tagsRepo = $this->manager->getRepository("App:Tag");
+                foreach ($entity->getTags() as $tag) {
+                    if ($tempTag = $tagsRepo->findOneBy(['label' => $tag->getLabel()])) {
+                        $entity->removeTag($tag);
+                        $entity->addTag($tempTag);
+                        continue;
+                    }
+                }
                 break;
             default:
                 return;

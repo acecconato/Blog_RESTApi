@@ -20,13 +20,13 @@ class Post
      * @ORM\Id()
      * @ORM\GeneratedValue()
      * @ORM\Column(type="integer")
-     * @Groups({"User", "Post", "Posts"})
+     * @Groups({"User", "Post", "Posts", "Category", "Tag"})
      */
     private $id;
 
     /**
      * @ORM\Column(type="string", length=90)
-     * @Groups({"User", "Posts", "Post"})
+     * @Groups({"User", "Posts", "Post", "Category", "Tag"})
      * @Assert\Length(min="5", max="90", groups={"Create", "Update"})
      */
     private $title;
@@ -92,13 +92,13 @@ class Post
     /**
      * @ORM\ManyToMany(targetEntity="App\Entity\Tag", mappedBy="posts", cascade={"persist"}, fetch="EAGER")
      * @ORM\JoinColumn(nullable=true)
-     * @Groups("Post")
+     * @Groups({"Post"})
      */
     private $tags;
 
     /**
      * @ORM\ManyToOne(targetEntity="App\Entity\User", inversedBy="posts", cascade={"persist"}, fetch="EAGER")
-     * @Groups("Post")
+     * @Groups({"Post", "Posts"})
      */
     private $user;
 

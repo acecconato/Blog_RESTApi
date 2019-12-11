@@ -19,7 +19,7 @@ class Category
      * @ORM\Id()
      * @ORM\GeneratedValue()
      * @ORM\Column(type="integer")
-     * @Groups({"Post"})
+     * @Groups({"Post", "Categories", "Category"})
      */
     private $id;
 
@@ -27,26 +27,42 @@ class Category
      * @ORM\Column(type="string", length=20)
      * @Assert\NotBlank(groups={"Create", "Update"})
      * @Assert\Length(max="20", groups={"Create", "Update"})
-     * @Groups({"Post"})
+     * @Groups({"Post", "Categories", "Category"})
      */
     private $label;
 
     /**
      * @ORM\Column(type="string", length=20, unique=true)
-     * @Assert\Length(min="4", max="20", groups={"Create", "Update"})
+     * @Assert\Length(min="4", max="20", groups={"Create", "Update", "Categories", "Category"})
      */
     private $slug;
 
     /**
      * @ORM\Column(type="text", nullable=true)
+     * @Groups({"Category"})
      */
     private $description;
 
     /**
      * @ORM\ManyToMany(targetEntity="App\Entity\Post", inversedBy="categories")
      * @ORM\JoinColumn(nullable=true)
+     * @Groups({"Category"})
      */
     private $posts;
+
+    /**
+     * @var int
+     * @Groups({"Categories"})
+     */
+    private $postsCount = 0;
+
+    /**
+     * @ORM\PostLoad()
+     */
+    public function onPostLoad()
+    {
+        $this->setPostsCount(count($this->getPosts()));
+    }
 
     public function __construct()
     {
@@ -127,6 +143,26 @@ class Category
         if ($this->posts->contains($post)) {
             $this->posts->removeElement($post);
         }
+
+        return $this;
+    }
+
+    /**
+     * @return int
+     */
+    public function getPostsCount(): int
+    {
+        return $this->postsCount;
+    }
+
+    /**
+     * @param int $postsCount
+     *
+     * @return Category
+     */
+    public function setPostsCount(int $postsCount): Category
+    {
+        $this->postsCount = $postsCount;
 
         return $this;
     }

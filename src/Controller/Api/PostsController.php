@@ -4,6 +4,7 @@ namespace App\Controller\Api;
 
 use App\Entity\EntityDuplicationSorter;
 use App\Entity\Post;
+use App\Entity\User;
 use App\Repository\PostRepository;
 use Doctrine\ORM\EntityManagerInterface;
 use Doctrine\ORM\Tools\Pagination\Paginator;
@@ -50,7 +51,7 @@ class PostsController extends AbstractFOSRestController
     }
 
     /**
-     * @Rest\Get("/posts/{id}", name="api_get_post")
+     * @Rest\Get("/posts/{id}", name="api_get_post", requirements={"\d+"})
      * @Entity("post", expr="repository.find(id)")
      * @Rest\View(serializerGroups={"Post"})
      *
@@ -64,7 +65,7 @@ class PostsController extends AbstractFOSRestController
     }
 
     /**
-     * @Rest\Post("/posts", name="api_create_post")
+     * @Rest\Post("/users/{id}/posts", name="api_create_post")
      * @ParamConverter(
      *     "post",
      *     converter="fos_rest.request_body",
@@ -72,6 +73,7 @@ class PostsController extends AbstractFOSRestController
      * )
      * @Rest\View(statusCode=201, serializerGroups={"Post"})
      *
+     * @param User $user
      * @param Post $post
      * @param ConstraintViolationList $violations
      * @param EntityManagerInterface $em
@@ -80,6 +82,7 @@ class PostsController extends AbstractFOSRestController
      * @return Post|View
      */
     public function apiCreatePost(
+        User $user,
         Post $post,
         ConstraintViolationList $violations,
         EntityManagerInterface $em,
@@ -89,10 +92,13 @@ class PostsController extends AbstractFOSRestController
             return $this->view($violations, Response::HTTP_BAD_REQUEST);
         }
 
-        // Prevents the creation of a new entity if it already exists.
+        // Prevents the duplication of the entity in the database if it already exists
         $sorter->handleDuplicatedContent($post, 'categories');
+        $sorter->handleDuplicatedContent($post, 'tags');
 
         $em->persist($post);
+        $post->setUser($user);
+
         $em->flush();
 
         return $post;

@@ -19,13 +19,13 @@ class User implements UserInterface
      * @ORM\Id()
      * @ORM\GeneratedValue()
      * @ORM\Column(type="integer")
-     * @Groups({"List", "User", "Post"})
+     * @Groups({"List", "User", "Post", "Posts"})
      */
     private $id;
 
     /**
      * @ORM\Column(type="string", length=40, unique=true)
-     * @Groups({"List", "User", "Post"})
+     * @Groups({"List", "User", "Post", "Posts"})
      * @Assert\NotBlank(groups={"Create"})
      * @Assert\Length(min="4", max="40", groups={"Create", "Update"})
      */
@@ -58,7 +58,7 @@ class User implements UserInterface
      * @var integer
      * @Groups({"List", "Post"})
      */
-    private $postsCount;
+    private $postsCount = 0;
 
     public function __construct()
     {
